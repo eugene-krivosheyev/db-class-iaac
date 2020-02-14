@@ -96,13 +96,17 @@
         state: present
 
 
+    - name: Git rid of bluetooth
+      tags: ux
+      command: systemctl disable bluetooth.service
+
+    - name: Turn on Night Shift
+      tags: ux
+      command: gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
+
     - name: Set wallpaper
       tags: ux
       command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
-
-    - name: Git rid of bluetooth
-      tags: ux
-      command: sudo systemctl disable bluetooth.service
 
 
     - name: "Warming up maven cache: Prepare build directory"
