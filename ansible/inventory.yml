@@ -111,31 +111,26 @@
 
     - name: "Warming up maven cache: Prepare build directory"
       tags: java, maven-warm-up
-      tempfile:
+      file:
+        path: /home/administrator/Temp/temp_build_dir
         state: directory
-      register: temp_build_dir
-
-    - debug:
-        msg: "{{ temp_build_dir.path }}"
-      when: temp_build_dir is defined
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven-warm-up
       command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application project
       args:
-        chdir: "{{ temp_build_dir.path }}"
-      when: temp_build_dir is defined
+        chdir: /home/administrator/Temp/temp_build_dir
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven-warm-up
       command: mvn clean verify -f project/pom.xml
       args:
-        chdir: "{{ temp_build_dir.path }}"
+        chdir: /home/administrator/Temp/temp_build_dir
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven-warm-up
       file:
-        path: "{{ temp_build_dir.path }}"
+        path: /home/administrator/Temp/temp_build_dir
         state: absent
 
 
