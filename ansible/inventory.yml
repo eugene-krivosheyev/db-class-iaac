@@ -21,7 +21,7 @@
         that:
           - ansible_processor_vcpus >= 4
           - (ansible_memtotal_mb * 1.024)|int >= 11000 #_Total_ RAM Mb
-          - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 230 #_Free_ disk Gb
+          - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 210 #_Free_ disk Gb
 
   roles:
     - role: geerlingguy.docker
