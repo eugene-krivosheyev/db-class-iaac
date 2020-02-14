@@ -113,7 +113,11 @@
       tags: java, maven-warm-up
       tempfile:
         state: directory
-      register: temp_build_dir  
+      register: temp_build_dir
+
+    - debug:
+        msg: "{{ temp_build_dir.path }}"
+      when: temp_build_dir is defined
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven-warm-up
