@@ -53,7 +53,7 @@
     - name: Install JDK
       tags: java
       apt:
-        name: openjdk-14-jdk
+        name: openjdk-8-jdk
         state: present
 
     - name: Install Maven
@@ -111,26 +111,30 @@
 
     - name: "Warming up maven cache: Prepare build directory"
       tags: java, maven-warm-up
+      become_user: administrator
       file:
-        path: /home/administrator/Temp/temp_build_dir
+        path: /home/administrator/Temp
         state: directory
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven-warm-up
-      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application project
+      become_user: administrator
+      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
       args:
-        chdir: /home/administrator/Temp/temp_build_dir
+        chdir: /home/administrator/Temp/
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven-warm-up
-      command: mvn clean verify -f project/pom.xml
+      become_user: administrator
+      command: mvn clean verify
       args:
-        chdir: /home/administrator/Temp/temp_build_dir
+        chdir: /home/administrator/Temp/temp_warmup_project
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven-warm-up
+      become_user: administrator
       file:
-        path: /home/administrator/Temp/temp_build_dir
+        path: /home/administrator/Temp/temp_warmup_project
         state: absent
 
 
