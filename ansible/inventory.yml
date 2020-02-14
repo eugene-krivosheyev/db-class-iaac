@@ -23,10 +23,6 @@
           - (ansible_memtotal_mb * 1.024)|int >= 11000 #_Total_ RAM Mb
           - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 210 #_Free_ disk Gb
 
-  roles:
-    - role: geerlingguy.docker
-      tags: docker
-
   tasks:
     - name: "Install Ansible: Add apt repository"
       tags: ansible
@@ -79,6 +75,7 @@
         classic: yes
         state: present
 
+
     - name: Remove Firefox
       tags: chromium
       apt:
@@ -90,6 +87,14 @@
       apt:
         name: chromium-browser
         state: present
+
+
+    - name: Install Docker CE
+      tags: docker
+      apt:
+        name: docker.io
+        state: present
+
 
     - name: Set wallpaper
       tags: ux
