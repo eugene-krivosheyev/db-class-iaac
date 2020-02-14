@@ -1,0 +1,133 @@
+- hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: "Prepare apt cache"
+    ignore_errors: yes
+    tags: apt
+    apt:
+      autoremove: yes
+      autoclean: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+
+- hosts: dev_stations
+  gather_facts: yes
+  become: yes
+
+  pre_tasks:
+    - assert:
+        that:
+          - ansible_processor_vcpus >= 4
+          - (ansible_memtotal_mb * 1.024)|int >= 11000 #_Total_ RAM Mb
+          - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 230 #_Free_ disk Gb
+
+  roles:
+    - role: geerlingguy.docker
+      tags: docker
+
+  tasks:
+    - name: "Install Ansible: Add apt repository"
+      tags: ansible
+      apt_repository:
+        repo: ppa:ansible/ansible
+        state: present
+
+    - name: "Install Ansible: Update apt repository"
+      tags: ansible
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+
+    - name: "Install Ansible: Install package"
+      tags: ansible
+      apt:
+        name: ansible
+        state: present
+
+
+    - name: Install Git
+      tags: git
+      apt:
+        name: git
+        state: present
+
+    - name: Install JDK
+      tags: java
+      apt:
+        name: openjdk-14-jdk
+        state: present
+
+    - name: Install Maven
+      tags: java
+      apt:
+        name: maven
+        state: present
+
+    - name: Install Gradle
+      tags: java
+      apt:
+        name: gradle
+        state: present
+
+    - name: Install IntelliJ IDEA CE
+      tags: java
+      snap:
+        name: intellij-idea-community
+        classic: yes
+        state: present
+
+    - name: Remove Firefox
+      tags: chromium
+      apt:
+        name: firefox
+        state: absent
+
+    - name: Install Chromium
+      tags: chromium
+      apt:
+        name: chromium-browser
+        state: present
+
+    - name: Set wallpaper
+      tags: ux
+      command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
+
+    - name: Git rid of bluetooth
+      tags: ux
+      command: sudo systemctl disable bluetooth.service
+
+
+    - name: "Warming up maven cache: Prepare build directory"
+      tags: java, maven-warm-up
+      tempfile:
+        state: directory
+      register: temp_build_dir  
+
+    - name: "Warming up maven cache: Clone java project"
+      tags: java, maven-warm-up
+      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application project
+      args:
+        chdir: "{{ temp_build_dir.path }}"
+      when: temp_build_dir is defined
+
+    - name: "Warming up maven cache: Build maven project"
+      tags: java, maven-warm-up
+      command: mvn clean verify -f project/pom.xml
+      args:
+        chdir: "{{ temp_build_dir.path }}"
+
+    - name: "Warming up maven cache: Remove build directory"
+      tags: java, maven-warm-up
+      file:
+        path: "{{ temp_build_dir.path }}"
+        state: absent
+
+
+    - name: Remove apt dependencies that are no longer required
+      tags: apt
+      apt:
+        autoremove: yes
+
