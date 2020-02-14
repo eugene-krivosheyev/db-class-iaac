@@ -75,18 +75,37 @@
         classic: yes
         state: present
 
+    - name: Prepare temporary directory
+      tags: java, maven-warm-up, chrome
+      become_user: administrator
+      file:
+        path: /home/administrator/Temp
+        state: directory
 
     - name: Remove Firefox
-      tags: chromium
+      tags: chrome
       apt:
         name: firefox
         state: absent
 
-    - name: Install Chromium
-      tags: chromium
-      apt:
-        name: chromium-browser
-        state: present
+    - name: Download Chrome deb package
+      tags: chrome
+      become_user: administrator
+      get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /home/administrator/Temp/
+
+    - name: Install Chrome
+      tags: chrome
+      command: dpkg -i google-chrome-stable_current_amd64.deb
+      args:
+        chdir: /home/administrator/Temp/
+
+    - name: Remove Chrome deb package
+      tags: chrome
+      file:
+        path: /home/administrator/Temp/google-chrome-stable_current_amd64.deb
+        state: absent 
 
 
     - name: Install Docker CE
@@ -102,19 +121,14 @@
 
     - name: Turn on Night Shift
       tags: ux
+      become_user: administrator
       command: gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
 
     - name: Set wallpaper
       tags: ux
+      become_user: administrator
       command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
 
-
-    - name: "Warming up maven cache: Prepare build directory"
-      tags: java, maven-warm-up
-      become_user: administrator
-      file:
-        path: /home/administrator/Temp
-        state: directory
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven-warm-up
