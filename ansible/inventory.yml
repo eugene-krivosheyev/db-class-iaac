@@ -47,9 +47,22 @@
         group: root
         mode: u=rw,g=r,o=r
 
-    - name: "Manage power settings: Restart"
+    - name: "Manage power settings: Apply config"
       tags: ux
       command: systemctl restart systemd-logind.service
+
+    - name: "Manage hibernating settings: Copy config"
+      tags: ux
+      copy:
+        src: grub
+        dest: /etc/default/
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+
+    - name: "Manage hibernating settings: Apply config"
+      tags: ux
+      command: update-grub
 
 
     - name: "Install Ansible: Add apt repository"
@@ -109,6 +122,7 @@
       file:
         path: /home/administrator/Temp
         state: directory
+
 
     - name: "Install Chrome: Remove Firefox"
       tags: chrome
