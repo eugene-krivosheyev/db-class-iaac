@@ -171,21 +171,21 @@
 
 
     - name: "Warming up maven cache: Clone java project"
-      tags: java, maven-warm-up
+      tags: java, maven, maven-warm-up
       become_user: administrator
       command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
       args:
         chdir: /home/administrator/Temp/
 
     - name: "Warming up maven cache: Build maven project"
-      tags: java, maven-warm-up
+      tags: java, maven, maven-warm-up
       become_user: administrator
       command: mvn clean verify
       args:
         chdir: /home/administrator/Temp/temp_warmup_project
 
     - name: "Warming up maven cache: Remove build directory"
-      tags: java, maven-warm-up
+      tags: java, maven, maven-warm-up
       become_user: administrator
       file:
         path: /home/administrator/Temp/temp_warmup_project
