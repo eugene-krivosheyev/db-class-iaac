@@ -170,3 +170,6 @@
       apt:
         autoremove: yes
 
+  post_tasks:
+    - name: Restart
+      command: reboot
