@@ -129,6 +129,19 @@
       become_user: administrator
       command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
 
+    - name: "Manage power settings: Copy power management config"
+      tags: ux
+      copy:
+        src: logind.conf
+        dest: /etc/systemd/
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+
+    - name: "Manage power settings: Restart"
+      tags: ux
+      command: systemctl restart systemd-logind.service
+
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven-warm-up
