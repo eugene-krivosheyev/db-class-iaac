@@ -160,6 +160,10 @@
         name: docker.io
         state: present
 
+    - name: "Install Docker: Get rid of Permission Denied"
+      tags: docker
+      command: chmod 666 /var/run/docker.sock
+
     - name: "Install Docker: Warm up Docker cache with useful images"
       tags: docker, docker-warm-up
       become_user: administrator
