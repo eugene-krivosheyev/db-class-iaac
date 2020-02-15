@@ -48,11 +48,6 @@ ip address show | grep global
 ssh-keygen -R <ip>
 ```
 
-- [ ] Обновить зависимости Ansible
-```bash
-ansible-galaxy install -r ansible/requirements.yml
-```
-
 - [ ] Smoke Test конфигурации хостов
 ```bash
 ansible -i ansible/hosts.yml --ask-pass --ask-become-pass -m shell -a 'uname -a' all
