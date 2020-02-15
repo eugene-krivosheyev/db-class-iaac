@@ -24,6 +24,34 @@
           - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 210 #_Free_ disk Gb
 
   tasks:
+    - name: Git rid of bluetooth
+      tags: ux
+      command: systemctl disable bluetooth.service
+
+    - name: Turn on Night Shift
+      tags: ux
+      become_user: administrator
+      command: gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
+
+    - name: Set wallpaper
+      tags: ux
+      become_user: administrator
+      command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
+
+    - name: "Manage power settings: Copy power management config"
+      tags: ux
+      copy:
+        src: logind.conf
+        dest: /etc/systemd/
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+
+    - name: "Manage power settings: Restart"
+      tags: ux
+      command: systemctl restart systemd-logind.service
+
+
     - name: "Install Ansible: Add apt repository"
       tags: ansible
       apt_repository:
@@ -82,65 +110,42 @@
         path: /home/administrator/Temp
         state: directory
 
-    - name: Remove Firefox
+    - name: "Install Chrome: Remove Firefox"
       tags: chrome
       apt:
         name: firefox
         state: absent
 
-    - name: Download Chrome deb package
+    - name: "Install Chrome: Download Chrome deb package"
       tags: chrome
       become_user: administrator
       get_url:
         url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
         dest: /home/administrator/Temp/
 
-    - name: Install Chrome
+    - name: "Install Chrome: Install deb package"
       tags: chrome
       command: dpkg -i google-chrome-stable_current_amd64.deb
       args:
         chdir: /home/administrator/Temp/
 
-    - name: Remove Chrome deb package
+    - name: "Install Chrome: Remove Chrome deb package"
       tags: chrome
       file:
         path: /home/administrator/Temp/google-chrome-stable_current_amd64.deb
         state: absent 
 
 
-    - name: Install Docker CE
+    - name: "Install Docker: Docker CE"
       tags: docker
       apt:
         name: docker.io
         state: present
 
-
-    - name: Git rid of bluetooth
-      tags: ux
-      command: systemctl disable bluetooth.service
-
-    - name: Turn on Night Shift
-      tags: ux
+    - name: "Install Docker: Warm up Docker cache with useful images"
+      tags: docker, docker-warm-up
       become_user: administrator
-      command: gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
-
-    - name: Set wallpaper
-      tags: ux
-      become_user: administrator
-      command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
-
-    - name: "Manage power settings: Copy power management config"
-      tags: ux
-      copy:
-        src: logind.conf
-        dest: /etc/systemd/
-        owner: root
-        group: root
-        mode: u=rw,g=r,o=r
-
-    - name: "Manage power settings: Restart"
-      tags: ux
-      command: systemctl restart systemd-logind.service
+      command: docker pull openjdk:8-jre-alpine
 
 
     - name: "Warming up maven cache: Clone java project"
@@ -169,6 +174,7 @@
       tags: apt
       apt:
         autoremove: yes
+
 
   post_tasks:
     - name: Restart
