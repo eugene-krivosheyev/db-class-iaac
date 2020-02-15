@@ -24,9 +24,29 @@
           - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 210 #_Free_ disk Gb
 
   tasks:
-    - name: Get rid of Apparmor
+    - name: "Get rid of Apparmor: Stop service"
+      tags: ux, apparmor
+      command: /etc/init.d/apparmor stop
+      
+    - name: "Get rid of Apparmor: Remove service"
+      tags: ux, apparmor
+      command: update-rc.d -f apparmor remove
+
+    - name: "Get rid of Apparmor: Remove package"
+      tags: ux, apparmor
+      apt:
+        name: apparmor
+        state: absent
+
+    - name: Allow guest login sessions
       tags: ux
-      command: /etc/init.d/apparmor stop && update-rc.d -f apparmor remove && apt remove apparmor
+      copy:
+        src: 50_budgie-desktop.conf
+        dest: /etc/lightdm/lightdm.conf.d/
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+
 
     - name: Get rid of bluetooth
       tags: ux
