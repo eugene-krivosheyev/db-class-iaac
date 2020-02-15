@@ -199,5 +199,15 @@
 
 
   post_tasks:
-    - name: Restart
-      command: reboot
+    - name: Reboot
+      tags: reboot
+      command: shutdown -r now "Reboot triggered by Ansible script"
+      async: 1
+      ignore_errors: yes
+
+    - name: Wait for instance up after reboot
+      tags: reboot
+      wait_for_connection:
+        delay: 5
+        timeout: 30
+      ignore_errors: yes
