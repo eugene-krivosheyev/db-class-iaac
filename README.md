@@ -15,6 +15,7 @@
 ## Configuration
 - [ ] Integrated Graphics Controller: Forces
 - [ ] UMA Frame Buffer Size: 256m
+- [ ] HotKey Mode: Disabled
 - [ ] Always on USB: Disabled
 ## Security
 - [ ] Set Administrator Password
@@ -33,10 +34,11 @@
 - [ ] Обеспечить доступ по ssh извне
 ```bash
 sudo apt install openssh-server
-sudo echo "Port 22" >> /etc/ssh/ssh_config
+sudo echo "Port 22" | sudo tee -a /etc/ssh/ssh_config > /dev/null
 sudo systemctl restart ssh.service 
 ip address show | grep global
 ```
+или по [ссылке](https://tinyurl.com/ekr-ssh)
 - [ ] Добавить адрес в _hosts.yml_
 
 # Автоматический провиженинг
