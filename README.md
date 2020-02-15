@@ -64,4 +64,3 @@ ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inven
 - [ ] Оставить в Dock только tilix и IDEA
 - [ ] Ubuntu сама выдает ошибку про локаль/язык
 - [ ] Качать предложенную поддержку языка
-- [ ] Включить Night Shift
