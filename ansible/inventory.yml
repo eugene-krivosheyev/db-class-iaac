@@ -1,3 +1,12 @@
+#TODO static ips
+#TODO non guest developer user (dd to groups)
+#TODO tmpfs home for developer user
+#TODO shared maven cache
+#TODO idea settings
+#TODO internet access rules
+#TODO switch drivers
+#TODO refactor to roles
+
 - hosts: all
   gather_facts: no
   become: yes

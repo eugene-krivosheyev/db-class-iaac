@@ -9,7 +9,7 @@
 - [ ] Erase disk and install Ubuntu
 - [ ] Moscow Location
 - [ ] Пользователь: administrator
-- [ ] Имя хоста devstation-0x
+- [ ] Имя хоста devstation
 
 # Настройка BIOS @F2 после установки ОС
 ## Configuration
