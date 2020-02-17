@@ -1,4 +1,3 @@
-
 #TODO idea settings
 #TODO internet access rules
 #TODO switch drivers
@@ -50,6 +49,10 @@
         name: developers
         state: present
 
+    - name: Create developer user
+      tags: user4developer
+      command: adduser --disabled-password --gecos "" developer
+
     - name: Add administrator user to developers group
       tags: user4developer
       user:
@@ -57,15 +60,12 @@
         groups: developers
         append: yes
 
-    - name: Create developer user
+    - name: Add developer user to developers group
       tags: user4developer
       user:
         name: developer
-        group: developers
-
-    - name: Reset developer user password
-      tags: user4developer
-      command: passwd -d developer
+        groups: developers
+        append: yes
 
 
     - name: Turn on Night Shift
