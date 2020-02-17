@@ -26,8 +26,8 @@
 
 # Первый запуск
 - [ ] Подключиться к WiFi
-- [ ] Ubuntu предлагает накатить обновления - отложить
-- [ ] Ubuntu сама выдает ошибку про локаль/язык - отложить
+- [ ] Ubuntu предлагает накатить обновления - накатить
+- [ ] Ubuntu выдает ошибку про локаль/язык - качать предложенную поддержку языка
 - [ ] Яркость экрана на половину
 - [ ] Выключить звук
 
@@ -45,7 +45,7 @@ ip address show | grep global
 # Автоматический провиженинг
 - [x] Cбросить ssh кеша хостов
 ```bash
-ssh-keygen -R <ip>
+ssh-keygen -R 192.168.1.49
 ```
 
 - [ ] Smoke Test конфигурации хостов
@@ -53,12 +53,14 @@ ssh-keygen -R <ip>
 ansible -i ansible/hosts.yml --ask-pass --ask-become-pass -m shell -a 'uname -a' all
 ```
 
-- [ ] Провиженинг
+- [ ] Провиженинг базовых фич
 ```bash
-ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml [--limit dev_stations] [--tags "ansible"] [--skip-tags "docker"] [--start-at-task='Shut down CI docker containers'] [--step] [-vvv]
+ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml --skip-tags "homedir4developer" [--start-at-task='Shut down CI docker containers'] [--step] [--tags "ansible"] [--limit dev_stations] [-vvv]
 ```
 
-# Ручной пост-провиженинг
-- [ ] Оставить в Dock только tilix и IDEA
-- [ ] Ubuntu предлагает накатить обновления - накатить
-- [ ] Ubuntu сама выдает ошибку про локаль/язык - качать предложенную поддержку языка
+- [ ] После перезагрузки зайти с клавиатуры в GUI как *developer*
+  
+- [ ] Провиженинг виртуальной домашней директории для пользователя developer
+```bash
+ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml --tags "homedir4developer"
+```

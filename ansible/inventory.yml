@@ -1,7 +1,4 @@
-#TODO static ips
-#TODO non guest developer user (dd to groups)
-#TODO tmpfs home for developer user
-#TODO shared maven cache
+
 #TODO idea settings
 #TODO internet access rules
 #TODO switch drivers
@@ -33,44 +30,58 @@
           - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 210 #_Free_ disk Gb
 
   tasks:
-    - name: "Get rid of Apparmor: Stop service"
-      tags: ux, apparmor
-      command: /etc/init.d/apparmor stop
-      
-    - name: "Get rid of Apparmor: Remove service"
-      tags: ux, apparmor
-      command: update-rc.d -f apparmor remove
-
-    - name: "Get rid of Apparmor: Remove package"
-      tags: ux, apparmor
-      apt:
-        name: apparmor
-        state: absent
-
-    - name: Allow guest login sessions
-      tags: ux
-      copy:
-        src: 50_budgie-desktop.conf
-        dest: /etc/lightdm/lightdm.conf.d/
+    - name: "Set static host ip: Update config"
+      tags: network
+      template:
+        src: templates/01-network-manager-all.yaml.j2
+        dest: /etc/netplan/01-network-manager-all.yaml
         owner: root
         group: root
         mode: u=rw,g=r,o=r
 
+    - name: "Set static host ip: Restart service"
+      tags: network
+      command: netplan apply
 
-    - name: Get rid of bluetooth
-      tags: ux
-      command: systemctl disable bluetooth.service
+
+    - name: Create developer group
+      tags: user4developer
+      group:
+        name: developers
+        state: present
+
+    - name: Add administrator user to developers group
+      tags: user4developer
+      user:
+        name: administrator
+        groups: developers
+        append: yes
+
+    - name: Create developer user
+      tags: user4developer
+      user:
+        name: developer
+        group: developers
+
+    - name: Reset developer user password
+      tags: user4developer
+      command: passwd -d developer
+
 
     - name: Turn on Night Shift
       tags: ux
-      become_user: administrator
+      become_user: developer
       command: gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
 
     - name: Set wallpaper
       tags: ux
-      become_user: administrator
+      become_user: developer
       command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
 
+    - name: Get rid of bluetooth
+      tags: ux
+      command: systemctl disable bluetooth.service
+    
     - name: "Manage power settings: Copy power management config"
       tags: ux
       copy:
@@ -130,11 +141,29 @@
         name: openjdk-8-jdk
         state: present
 
-    - name: Install Maven
-      tags: java
+
+    - name: "Install Maven: Install package"
+      tags: java, maven
       apt:
         name: maven
         state: present
+
+    - name: "Install Maven: Make local repo folder"
+      tags: java, maven, maven-repo
+      file:
+        path: /usr/share/maven-repo/
+        state: directory
+        owner: developer
+        group: developers
+        mode: u=rwx,g=rw,o=r
+        recurse: yes
+
+    - name: "Install Maven: Configure local repo folder"
+      tags: java, maven, maven-repo
+      copy:
+        src: settings.xml
+        dest: /usr/share/maven/conf/
+
 
     - name: Install Gradle
       tags: java
@@ -149,11 +178,18 @@
         classic: yes
         state: present
 
-    - name: Prepare temporary directory
-      tags: java, maven-warm-up, chrome
+    - name: "Prepare temporary directories: administrator/Temp"
+      tags: ux, chrome
       become_user: administrator
       file:
         path: /home/administrator/Temp
+        state: directory
+
+    - name: "Prepare temporary directories: developer/Temp"
+      tags: ux, java, maven-warm-up
+      become_user: developer
+      file:
+        path: /home/developer/Temp
         state: directory
 
 
@@ -189,6 +225,13 @@
         name: docker.io
         state: present
 
+    - name: Add developer user to Docker group
+      tags: user4developer, docker
+      user:
+        name: developer
+        groups: docker
+        append: yes
+
     - name: "Install Docker: Get rid of Permission Denied"
       tags: docker
       command: chmod 666 /var/run/docker.sock
@@ -201,23 +244,25 @@
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven, maven-warm-up
-      become_user: administrator
+      become_user: developer
       command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
       args:
-        chdir: /home/administrator/Temp/
+        chdir: /home/developer/Temp/
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
-      become_user: administrator
+      become: yes
+      become_user: developer
+      become_method: sudo
       command: mvn clean verify
       args:
-        chdir: /home/administrator/Temp/temp_warmup_project
+        chdir: /home/developer/Temp/temp_warmup_project
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven, maven-warm-up
-      become_user: administrator
+      become_user: developer
       file:
-        path: /home/administrator/Temp/temp_warmup_project
+        path: /home/developer/Temp/temp_warmup_project
         state: absent
 
 
@@ -227,7 +272,6 @@
         autoremove: yes
 
 
-  post_tasks:
     - name: Reboot
       tags: reboot
       command: shutdown -r now "Reboot triggered by Ansible script"
@@ -236,6 +280,47 @@
 
     - name: Wait for instance up after reboot
       tags: reboot
+      wait_for_connection:
+        delay: 5
+        timeout: 30
+      ignore_errors: yes
+
+
+    - name: "Make developer homedir in-memory: Allow mounting for non-sudo developer account"
+      tags: user4developer, homedir4developer
+      copy:
+        src: sudoers
+        dest: /etc/
+        owner: root
+        group: root
+        mode: u=r,g=r,o=r
+     
+    - name: "Make developer homedir in-memory: Copy in-memory filesystem mount script"
+      tags: user4developer, homedir4developer
+      copy:
+        src: .memhomedir.sh
+        dest: /home/developer/
+        owner: developer
+        group: developers
+        mode: u=rwx,g=r,o=r 
+
+    - name: "Make developer homedir in-memory: Enable auto-mount in-memory homedir at logon"
+      tags: user4developer, homedir4developer
+      copy:
+        src: .profile
+        dest: /home/developer/
+        owner: developer
+        group: developers
+        mode: u=rw,g=r,o=r
+
+    - name: Reboot
+      tags: reboot, homedir4developer
+      command: shutdown -r now "Reboot triggered by Ansible script"
+      async: 1
+      ignore_errors: yes
+
+    - name: Wait for instance up after reboot
+      tags: reboot, homedir4developer
       wait_for_connection:
         delay: 5
         timeout: 30
