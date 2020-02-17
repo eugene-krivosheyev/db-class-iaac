@@ -43,7 +43,7 @@ ip address show | grep global
 - [ ] Добавить адрес в _hosts.yml_
 
 # Автоматический провиженинг
-- [x] Cбросить ssh кеша хостов
+- [ ] Cбросить ssh кеша хостов
 ```bash
 ssh-keygen -R 192.168.1.49
 ```

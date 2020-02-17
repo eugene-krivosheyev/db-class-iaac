@@ -43,7 +43,7 @@
       command: netplan apply
 
 
-    - name: Create developer group
+    - name: Create developers group
       tags: user4developer
       group:
         name: developers
@@ -66,6 +66,10 @@
         name: developer
         groups: developers
         append: yes
+
+    - name: Reset developer user password
+      tags: user4developer
+      command: passwd -d developer
 
 
     - name: Turn on Night Shift
