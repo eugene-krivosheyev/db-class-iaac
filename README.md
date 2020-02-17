@@ -55,12 +55,5 @@ ansible -i ansible/hosts.yml --ask-pass --ask-become-pass -m shell -a 'uname -a'
 
 - [ ] Провиженинг базовых фич
 ```bash
-ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml --skip-tags "homedir4developer" [--start-at-task='Shut down CI docker containers'] [--step] [--tags "ansible"] [--limit dev_stations] [-vvv]
-```
-
-- [ ] После перезагрузки зайти с клавиатуры в GUI как *developer*
-  
-- [ ] Провиженинг виртуальной домашней директории для пользователя developer
-```bash
-ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml --tags "homedir4developer"
+ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml [--skip-tags "homedir4developer"] [--start-at-task='Shut down CI docker containers'] [--step] [--tags "ansible"] [--limit dev_stations] [-vvv]
 ```
