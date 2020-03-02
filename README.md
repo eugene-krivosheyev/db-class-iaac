@@ -37,6 +37,7 @@
 sudo apt install openssh-server
 sudo echo "Port 22" | sudo tee -a /etc/ssh/ssh_config > /dev/null
 sudo systemctl restart ssh.service 
+sudo ufw allow in 22
 ip address show | grep global
 ```
 или по [ссылке](https://tinyurl.com/ekr-ssh)
