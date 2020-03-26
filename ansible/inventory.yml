@@ -3,7 +3,6 @@
 # internet access rules
 # refactor to roles
 
-
 - hosts: dev_stations
   gather_facts: yes
   become: yes
@@ -109,8 +108,12 @@
       file:
         path: /usr/share/maven-repo/
         state: directory
+        owner: developer
+        group: developer
+        mode: u=rwx,g=rwx,o=r
+        recurse: yes
 
-    - name: "Install Maven: Configure local repo folder"
+    - name: "Install Maven: Configure local repo"
       tags: java, maven, maven-repo
       copy:
         src: settings.xml
@@ -136,6 +139,9 @@
       copy:
         src: settings.zip
         dest: /home/developer/.IdeaIC2019.3/config/
+        owner: developer
+        group: developer
+        mode: u=rwx,g=rwx,o=r
 
 
     - name: "Prepare temporary directories: developer/Temp"
@@ -143,20 +149,35 @@
       file:
         path: /home/developer/Temp
         state: directory
+        owner: developer
+        group: developer
+        mode: u=rwx,g=rwx,o=r
+        recurse: yes
 
 
-    - name: "Install Chromium: Remove Firefox"
-      tags: chromium
+    - name: "Install Chrome: Remove Firefox"
+      tags: chrome
       package:
         name: firefox
         state: absent
 
-    - name: "Install Chromium: Install snap"
-      tags: chromium
-      snap:
-        name: chromium
-        classic: yes
-        state: present        
+    - name: "Install Chrome: Download Chrome deb package"
+      tags: chrome
+      get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /home/developer/Temp/
+
+    - name: "Install Chrome: Install deb package"
+      tags: chrome
+      command: dpkg -i google-chrome-stable_current_amd64.deb
+      args:
+        chdir: /home/developer/Temp/
+
+    - name: "Install Chrome: Remove Chrome deb package"
+      tags: chrome
+      file:
+        path: /home/developer/Temp/google-chrome-stable_current_amd64.deb
+        state: absent        
 
 
     - name: "Install Docker: Docker CE"
@@ -166,7 +187,7 @@
         state: present
 
     - name: Add developer user to Docker group
-      tags: user4developer, docker
+      tags: docker
       user:
         name: developer
         groups: docker
@@ -183,21 +204,22 @@
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven, maven-warm-up
-      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
-      args:
-        chdir: /home/developer/Temp/
+      become_user: developer
+      git:
+        repo: https://github.com/eugene-krivosheyev/agile-practices-application
+        dest: /home/developer/Temp/agile-practices-application
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
+      become_user: developer
       command: mvn clean verify
       args:
-        chdir: /home/developer/Temp/temp_warmup_project
+        chdir: /home/developer/Temp/agile-practices-application
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven, maven-warm-up
-      become_user: developer
       file:
-        path: /home/developer/Temp/temp_warmup_project
+        path: /home/developer/Temp/agile-practices-application
         state: absent
 
 
