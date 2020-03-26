@@ -225,7 +225,14 @@
       become_user: administrator
       command: docker pull openjdk:8-jre-alpine
 
-    
+
+    - name: "Warming up maven cache: Clone java project"
+      tags: java, maven, maven-warm-up
+      become_user: developer
+      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
+      args:
+        chdir: /home/developer/Temp/
+
     - name: "Warming up maven cache: Resetting owning for Maven repo"
       tags: maven, maven-warm-up
       file:
@@ -234,13 +241,6 @@
         group: developers
         mode: u=rwx,g=rwx,o=r
         recurse: yes
-
-    - name: "Warming up maven cache: Clone java project"
-      tags: java, maven, maven-warm-up
-      become_user: developer
-      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
-      args:
-        chdir: /home/developer/Temp/
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
