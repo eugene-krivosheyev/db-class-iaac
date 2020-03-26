@@ -3,19 +3,6 @@
 # internet access rules
 # refactor to roles
 
-- hosts: all
-  gather_facts: no
-  become: yes
-
-  tasks:
-  - name: "Prepare apt cache"
-    ignore_errors: yes
-    tags: apt
-    apt:
-      autoremove: yes
-      autoclean: yes
-      update_cache: yes
-      cache_valid_time: 86400 #One day
 
 - hosts: dev_stations
   gather_facts: yes
@@ -42,35 +29,6 @@
     - name: "Set static host ip: Restart service"
       tags: network
       command: netplan apply
-
-
-    - name: Create developers group
-      tags: user4developer
-      group:
-        name: developers
-        state: present
-
-    - name: Create developer user
-      tags: user4developer
-      command: adduser --disabled-password --gecos "" developer
-
-    - name: Add administrator user to developers group
-      tags: user4developer
-      user:
-        name: administrator
-        groups: developers
-        append: yes
-
-    - name: Add developer user to developers group
-      tags: user4developer
-      user:
-        name: developer
-        groups: developers
-        append: yes
-
-    - name: Reset developer user password
-      tags: user4developer
-      command: passwd -d developer
 
 
     - name: Get rid of bluetooth
@@ -105,14 +63,17 @@
 
 
     - name: "Install Ansible: Add apt repository"
-      tags: ansible
+      tags: apt, ansible
       apt_repository:
         repo: ppa:ansible/ansible
         state: present
 
-    - name: "Install Ansible: Update apt repository"
-      tags: ansible
+    - name: "Prepare apt cache"
+      ignore_errors: yes
+      tags: apt
       apt:
+        autoremove: yes
+        autoclean: yes
         upgrade: yes
         update_cache: yes
         cache_valid_time: 86400 #One day
@@ -148,10 +109,6 @@
       file:
         path: /usr/share/maven-repo/
         state: directory
-        owner: developer
-        group: developers
-        mode: u=rwx,g=rwx,o=r
-        recurse: yes
 
     - name: "Install Maven: Configure local repo folder"
       tags: java, maven, maven-repo
@@ -183,7 +140,6 @@
 
     - name: "Prepare temporary directories: developer/Temp"
       tags: ux, java, maven-warm-up
-      become_user: developer
       file:
         path: /home/developer/Temp
         state: directory
@@ -222,51 +178,26 @@
 
     - name: "Install Docker: Warm up Docker cache with useful images"
       tags: docker, docker-warm-up
-      become_user: administrator
       command: docker pull openjdk:8-jre-alpine
 
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven, maven-warm-up
-      become_user: developer
       command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
       args:
         chdir: /home/developer/Temp/
 
-    - name: "Warming up maven cache: Resetting owning for Maven repo before build"
-      tags: maven, maven-warm-up
-      become: yes
-      file:
-        path: /usr/share/maven-repo/
-        owner: developer
-        group: developers
-        mode: u=rwx,g=rwx,o=r
-        recurse: yes
-
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
-      become: yes
-      become_user: developer
-      become_method: sudo
       command: mvn clean verify
       args:
         chdir: /home/developer/Temp/temp_warmup_project
-
-    - name: "Warming up maven cache: Resetting owning for Maven repo after build"
-      tags: maven, maven-warm-up
-      become: yes
-      file:
-        path: /usr/share/maven-repo/
-        owner: developer
-        group: developers
-        mode: u=rwx,g=rwx,o=r
-        recurse: yes
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven, maven-warm-up
       become_user: developer
       file:
-        path: /home/developer/Temp
+        path: /home/developer/Temp/temp_warmup_project
         state: absent
 
 

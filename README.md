@@ -8,7 +8,7 @@
 - [ ] Minimal installation, Download Updates, Install third-party software
 - [ ] Erase disk and install Ubuntu
 - [ ] Moscow Location
-- [ ] Пользователь: administrator
+- [ ] Пользователь: developer
 - [ ] Имя хоста devstation
 
 # Настройка BIOS @F2 после установки ОС
