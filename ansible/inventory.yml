@@ -209,6 +209,15 @@
         repo: https://github.com/eugene-krivosheyev/agile-practices-application
         dest: /home/developer/Temp/agile-practices-application
 
+    - name: "Warming up maven cache: Ensure ownership of maven repo"
+      tags: java, maven, maven-repo
+      file:
+        path: /usr/share/maven-repo/
+        owner: developer
+        group: developer
+        mode: u=rwx,g=rwx,o=r
+        recurse: yes
+
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
       become_user: developer
