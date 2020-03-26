@@ -1,5 +1,5 @@
 # TODO: 
-# idea settings
+# temorary/session developer home folder
 # internet access rules
 # refactor to roles
 
@@ -27,8 +27,7 @@
           - ansible_processor_vcpus >= 4
           - (ansible_memtotal_mb * 0.001024) | int >= 12
           - ((ansible_mounts|first).size_available | float / 1000000000) >= 200
-      tags: not_for_docker_test_env
-
+      tags: not_for_virtual_box_test_env
 
   tasks:
     - name: "Set static host ip: Update config"
@@ -167,19 +166,20 @@
         name: gradle
         state: present
 
-    - name: Install IntelliJ IDEA CE
-      tags: java
+
+    - name: "Install IntelliJ IDEA CE: IDE"
+      tags: java, idea
       snap:
         name: intellij-idea-community
         classic: yes
         state: present
 
-    - name: "Prepare temporary directories: administrator/Temp"
-      tags: ux, chrome
-      become_user: administrator
-      file:
-        path: /home/administrator/Temp
-        state: directory
+    - name: "Install IntelliJ IDEA CE: Settings"
+      tags: java, idea
+      copy:
+        src: settings.zip
+        dest: /home/developer/.IdeaIC2019.3/config/
+
 
     - name: "Prepare temporary directories: developer/Temp"
       tags: ux, java, maven-warm-up
@@ -189,30 +189,18 @@
         state: directory
 
 
-    - name: "Install Chrome: Remove Firefox"
-      tags: chrome
+    - name: "Install Chromium: Remove Firefox"
+      tags: chromium
       package:
         name: firefox
         state: absent
 
-    - name: "Install Chrome: Download Chrome deb package"
-      tags: chrome
-      become_user: administrator
-      get_url:
-        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        dest: /home/administrator/Temp/
-
-    - name: "Install Chrome: Install deb package"
-      tags: chrome
-      command: dpkg -i google-chrome-stable_current_amd64.deb
-      args:
-        chdir: /home/administrator/Temp/
-
-    - name: "Install Chrome: Remove Chrome deb package"
-      tags: chrome
-      file:
-        path: /home/administrator/Temp/google-chrome-stable_current_amd64.deb
-        state: absent 
+    - name: "Install Chromium: Install snap"
+      tags: chromium
+      snap:
+        name: chromium
+        classic: yes
+        state: present        
 
 
     - name: "Install Docker: Docker CE"
@@ -237,15 +225,8 @@
       become_user: administrator
       command: docker pull openjdk:8-jre-alpine
 
-
-    - name: "Warming up maven cache: Clone java project"
-      tags: java, maven, maven-warm-up
-      become_user: developer
-      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
-      args:
-        chdir: /home/developer/Temp/
-
-    - name: Resetting owning for Maven repo
+    
+    - name: "Warming up maven cache: Resetting owning for Maven repo"
       tags: maven, maven-warm-up
       file:
         path: /usr/share/maven-repo/
@@ -253,6 +234,13 @@
         group: developers
         mode: u=rwx,g=rwx,o=r
         recurse: yes
+
+    - name: "Warming up maven cache: Clone java project"
+      tags: java, maven, maven-warm-up
+      become_user: developer
+      command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
+      args:
+        chdir: /home/developer/Temp/
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
@@ -267,7 +255,7 @@
       tags: java, maven, maven-warm-up
       become_user: developer
       file:
-        path: /home/developer/Temp/temp_warmup_project
+        path: /home/developer/Temp
         state: absent
 
 
