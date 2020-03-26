@@ -233,8 +233,9 @@
       args:
         chdir: /home/developer/Temp/
 
-    - name: "Warming up maven cache: Resetting owning for Maven repo"
+    - name: "Warming up maven cache: Resetting owning for Maven repo before build"
       tags: maven, maven-warm-up
+      become: yes
       file:
         path: /usr/share/maven-repo/
         owner: developer
@@ -250,6 +251,16 @@
       command: mvn clean verify
       args:
         chdir: /home/developer/Temp/temp_warmup_project
+
+    - name: "Warming up maven cache: Resetting owning for Maven repo after build"
+      tags: maven, maven-warm-up
+      become: yes
+      file:
+        path: /usr/share/maven-repo/
+        owner: developer
+        group: developers
+        mode: u=rwx,g=rwx,o=r
+        recurse: yes
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven, maven-warm-up
