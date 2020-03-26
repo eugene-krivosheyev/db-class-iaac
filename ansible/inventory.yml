@@ -1,7 +1,7 @@
-#TODO idea settings
-#TODO internet access rules
-#TODO switch drivers
-#TODO refactor to roles
+# TODO: 
+# idea settings
+# internet access rules
+# refactor to roles
 
 - hosts: all
   gather_facts: no
@@ -25,8 +25,10 @@
     - assert:
         that:
           - ansible_processor_vcpus >= 4
-          - (ansible_memtotal_mb * 1.024)|int >= 11000 #_Total_ RAM Mb
-          - ((ansible_mounts|first).size_available | float / 1000000000) | round(1, 'common') >= 210 #_Free_ disk Gb
+          - (ansible_memtotal_mb * 0.001024) | int >= 12
+          - ((ansible_mounts|first).size_available | float / 1000000000) >= 200
+      tags: not_for_docker_test_env
+
 
   tasks:
     - name: "Set static host ip: Update config"
@@ -71,16 +73,6 @@
       tags: user4developer
       command: passwd -d developer
 
-
-    - name: Turn on Night Shift
-      tags: ux
-      become_user: developer
-      command: gsettings set org.gnome.settings-daemon.plugins.color night-light-enabled true
-
-    - name: Set wallpaper
-      tags: ux
-      become_user: developer
-      command: gsettings set org.gnome.desktop.background picture-uri "file:///usr/share/backgrounds/budgie/ubuntu_budgie_wallpaper3.jpg"
 
     - name: Get rid of bluetooth
       tags: ux
@@ -135,20 +127,20 @@
 
     - name: Install Git
       tags: git
-      apt:
+      package:
         name: git
         state: present
 
     - name: Install JDK
       tags: java
-      apt:
-        name: openjdk-8-jdk
+      package:
+        name: openjdk-8-jdk-headless
         state: present
 
 
     - name: "Install Maven: Install package"
       tags: java, maven
-      apt:
+      package:
         name: maven
         state: present
 
@@ -159,7 +151,7 @@
         state: directory
         owner: developer
         group: developers
-        mode: u=rwx,g=rw,o=r
+        mode: u=rwx,g=rwx,o=r
         recurse: yes
 
     - name: "Install Maven: Configure local repo folder"
@@ -171,7 +163,7 @@
 
     - name: Install Gradle
       tags: java
-      apt:
+      package:
         name: gradle
         state: present
 
@@ -199,7 +191,7 @@
 
     - name: "Install Chrome: Remove Firefox"
       tags: chrome
-      apt:
+      package:
         name: firefox
         state: absent
 
@@ -225,7 +217,7 @@
 
     - name: "Install Docker: Docker CE"
       tags: docker
-      apt:
+      package:
         name: docker.io
         state: present
 
@@ -252,6 +244,15 @@
       command: git clone --branch master --depth 1 https://github.com/eugene-krivosheyev/agile-practices-application temp_warmup_project
       args:
         chdir: /home/developer/Temp/
+
+    - name: Resetting owning for Maven repo
+      tags: maven, maven-warm-up
+      file:
+        path: /usr/share/maven-repo/
+        owner: developer
+        group: developers
+        mode: u=rwx,g=rwx,o=r
+        recurse: yes
 
     - name: "Warming up maven cache: Build maven project"
       tags: java, maven, maven-warm-up
