@@ -25,10 +25,12 @@
 - [ ] PXE Boot to LAN: Disabled
 
 # Первый запуск
-- [ ] Подключиться к WiFi
-- [ ] Ubuntu предлагает накатить обновления - накатить
+
 - [ ] Яркость экрана на половину
 - [ ] Выключить звук
+- [ ] Подключиться к WiFi
+- [ ] Установить Additional Drivers
+- [ ] Ubuntu предлагает накатить обновления в панели задач - накатить
 
 # Ручной первичный провиженинг
 - [ ] Обеспечить доступ по ssh извне
@@ -36,7 +38,7 @@
 sudo apt install openssh-server
 sudo echo "Port 22" | sudo tee -a /etc/ssh/ssh_config > /dev/null
 sudo systemctl restart ssh.service 
-sudo ufw allow in 22
+sudo ufw allow 22
 ip address show | grep global
 ```
 или по [ссылке](https://tinyurl.com/ekr-ssh)

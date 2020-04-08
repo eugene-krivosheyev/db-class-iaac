@@ -3,6 +3,20 @@
 # internet access rules
 # refactor to roles
 
+- hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: "Prepare apt cache"
+    ignore_errors: yes
+    tags: apt
+    apt:
+      autoremove: yes
+      autoclean: yes
+      update_cache: yes
+      cache_valid_time: 86400 #One day
+
 - hosts: dev_stations
   gather_facts: yes
   become: yes
@@ -29,6 +43,34 @@
       tags: network
       command: netplan apply
 
+
+    - name: Create developers group
+      tags: user4developer
+      group:
+        name: developer
+        state: present
+
+    - name: Create developer user
+      tags: user4developer
+      command: adduser --disabled-password --gecos "" developer
+
+    - name: Add administrator user to developers group
+      tags: user4developer
+      user:
+        name: administrator
+        groups: developer
+        append: yes
+
+    - name: Add developer user to developers group
+      tags: user4developer
+      user:
+        name: developer
+        groups: developer
+        append: yes
+
+    - name: Reset developer user password
+      tags: user4developer
+      command: passwd -d developer
 
     - name: Get rid of bluetooth
       tags: ux
@@ -67,9 +109,8 @@
         repo: ppa:ansible/ansible
         state: present
 
-    - name: "Prepare apt cache"
-      ignore_errors: yes
-      tags: apt
+    - name: "Install Ansible: Update apt repository"
+      tags: ansible
       apt:
         autoremove: yes
         autoclean: yes
@@ -196,6 +237,27 @@
     - name: "Install Docker: Get rid of Permission Denied"
       tags: docker
       command: chmod 666 /var/run/docker.sock
+
+
+    - name: "Install dnsmasq: Install package"
+      tags: dnsmasq
+      apt:
+        name: dnsmasq
+        state: present
+
+    - name: "Install dnsmasq: Copy config"
+      tags: dnsmasq
+      copy:
+        src: dnsmasq.conf
+        dest: /etc/
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+
+    - name: "Install dnsmasq: Restart service"
+      tags: dnsmasq
+      command: service dnsmasq restart
+
 
     - name: "Install Docker: Warm up Docker cache with useful images"
       tags: docker, docker-warm-up
