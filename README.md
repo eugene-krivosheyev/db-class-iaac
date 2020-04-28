@@ -2,6 +2,9 @@
 
 ---
 
+# Загрузочная флешка
+- [ ] [Ubuntu 20.04](https://releases.ubuntu.com/20.04/ubuntu-20.04-desktop-amd64.iso)
+
 # Загрузка с флешки @F12 и установка ОС
 - [ ] Сразу соединяемся к WiFi: ekr@bk.ru
 - [ ] Keyboard Layout: Russia
