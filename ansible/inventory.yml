@@ -43,39 +43,6 @@
       tags: network
       command: netplan apply
 
-
-    - name: Create developers group
-      tags: user4developer
-      group:
-        name: developer
-        state: present
-      ignore_errors: yes
-
-    - name: Create developer user
-      tags: user4developer
-      command: adduser --disabled-password --gecos "" developer
-      ignore_errors: yes
-
-    - name: Add administrator user to developers group
-      tags: user4developer
-      user:
-        name: administrator
-        groups: developer, users
-        append: yes
-      ignore_errors: yes
-
-    - name: Add developer user to developers and users groups
-      tags: user4developer
-      user:
-        name: developer
-        groups: developer, users
-        append: yes
-      ignore_errors: yes
-
-    - name: Reset developer user password
-      tags: user4developer
-      command: passwd -d developer
-
     - name: Get rid of bluetooth
       tags: ux
       command: systemctl disable bluetooth.service
@@ -155,8 +122,8 @@
       file:
         path: /usr/share/maven-repo/
         state: directory
-        owner: developer
-        group: developer
+        owner: administrator
+        group: administrator
         mode: u=rwx,g=rwx,o=r
         recurse: yes
 
@@ -185,19 +152,19 @@
       tags: java, idea
       copy:
         src: settings.zip
-        dest: /home/developer/.IdeaIC2019.3/config/
-        owner: developer
-        group: developer
+        dest: /home/administrator/.Idea*/config/
+        owner: administrator
+        group: administrator
         mode: u=rwx,g=rwx,o=r
 
 
-    - name: "Prepare temporary directories: developer/Temp"
+    - name: "Prepare temporary directories: administrator/Temp"
       tags: ux, java, maven-warm-up
       file:
-        path: /home/developer/Temp
+        path: /home/administrator/Temp
         state: directory
-        owner: developer
-        group: developer
+        owner: administrator
+        group: administrator
         mode: u=rwx,g=rwx,o=r
         recurse: yes
 
@@ -221,10 +188,10 @@
         name: docker.io
         state: present
 
-    - name: Add developer user to Docker group
+    - name: Add user to Docker group
       tags: docker
       user:
-        name: developer
+        name: administrator
         groups: docker
         append: yes
 
@@ -240,34 +207,31 @@
 
     - name: "Warming up maven cache: Clone java project"
       tags: java, maven, maven-warm-up
-      become_user: developer
       git:
         repo: https://github.com/eugene-krivosheyev/agile-practices-application
-        dest: /home/developer/Temp/agile-practices-application
+        dest: /home/administrator/Temp/agile-practices-application
         force: yes
 
     - name: "Warming up maven cache: Ensure ownership of maven repo"
       tags: java, maven, maven-repo
       file:
         path: /usr/share/maven-repo/
-        owner: developer
-        group: developer
+        owner: administrator
+        group: administrator
         mode: u=rwx,g=rwx,o=r
         recurse: yes
 
-
-
-    # - name: "Warming up maven cache: Build maven project"
-      # tags: java, maven, maven-warm-up
-      # become_user: developer
-      # command: mvn clean verify
-      # args:
-      #   chdir: /home/developer/Temp/agile-practices-application
+    - name: "Warming up maven cache: Build maven project"
+      tags: java, maven, maven-warm-up
+      become_user: administrator
+      command: mvn clean verify
+      args:
+        chdir: /home/administrator/Temp/agile-practices-application
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven, maven-warm-up
       file:
-        path: /home/developer/Temp/agile-practices-application
+        path: /home/administrator/Temp/agile-practices-application
         state: absent
 
 
