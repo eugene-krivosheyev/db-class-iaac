@@ -49,24 +49,28 @@
       group:
         name: developer
         state: present
+      ignore_errors: yes
 
     - name: Create developer user
       tags: user4developer
       command: adduser --disabled-password --gecos "" developer
+      ignore_errors: yes
 
     - name: Add administrator user to developers group
       tags: user4developer
       user:
         name: administrator
-        groups: developer
+        groups: developer, users
         append: yes
+      ignore_errors: yes
 
-    - name: Add developer user to developers group
+    - name: Add developer user to developers and users groups
       tags: user4developer
       user:
         name: developer
-        groups: developer
+        groups: developer, users
         append: yes
+      ignore_errors: yes
 
     - name: Reset developer user password
       tags: user4developer
@@ -108,6 +112,7 @@
       apt_repository:
         repo: ppa:ansible/ansible
         state: present
+      ignore_errors: yes
 
     - name: "Install Ansible: Update apt repository"
       tags: ansible
@@ -117,6 +122,7 @@
         upgrade: yes
         update_cache: yes
         cache_valid_time: 86400 #One day
+      ignore_errors: yes
 
     - name: "Install Ansible: Install package"
       tags: ansible
@@ -196,29 +202,17 @@
         recurse: yes
 
 
-    - name: "Install Chrome: Remove Firefox"
-      tags: chrome
+    - name: "Install Chromium: Remove Firefox"
+      tags: chromium
       package:
         name: firefox
         state: absent
 
-    - name: "Install Chrome: Download Chrome deb package"
-      tags: chrome
-      get_url:
-        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-        dest: /home/developer/Temp/
-
-    - name: "Install Chrome: Install deb package"
-      tags: chrome
-      command: dpkg -i google-chrome-stable_current_amd64.deb
-      args:
-        chdir: /home/developer/Temp/
-
-    - name: "Install Chrome: Remove Chrome deb package"
-      tags: chrome
-      file:
-        path: /home/developer/Temp/google-chrome-stable_current_amd64.deb
-        state: absent        
+    - name: "Install Chromium: Install package"
+      tags: chromium
+      package: 
+        name: chromium-browser
+        state: present        
 
 
     - name: "Install Docker: Docker CE"
@@ -239,26 +233,6 @@
       command: chmod 666 /var/run/docker.sock
 
 
-    - name: "Install dnsmasq: Install package"
-      tags: dnsmasq
-      apt:
-        name: dnsmasq
-        state: present
-
-    - name: "Install dnsmasq: Copy config"
-      tags: dnsmasq
-      copy:
-        src: dnsmasq.conf
-        dest: /etc/
-        owner: root
-        group: root
-        mode: u=rw,g=r,o=r
-
-    - name: "Install dnsmasq: Restart service"
-      tags: dnsmasq
-      command: service dnsmasq restart
-
-
     - name: "Install Docker: Warm up Docker cache with useful images"
       tags: docker, docker-warm-up
       command: docker pull openjdk:8-jre-alpine
@@ -270,6 +244,7 @@
       git:
         repo: https://github.com/eugene-krivosheyev/agile-practices-application
         dest: /home/developer/Temp/agile-practices-application
+        force: yes
 
     - name: "Warming up maven cache: Ensure ownership of maven repo"
       tags: java, maven, maven-repo
@@ -280,12 +255,14 @@
         mode: u=rwx,g=rwx,o=r
         recurse: yes
 
-    - name: "Warming up maven cache: Build maven project"
-      tags: java, maven, maven-warm-up
-      become_user: developer
-      command: mvn clean verify
-      args:
-        chdir: /home/developer/Temp/agile-practices-application
+
+
+    # - name: "Warming up maven cache: Build maven project"
+      # tags: java, maven, maven-warm-up
+      # become_user: developer
+      # command: mvn clean verify
+      # args:
+      #   chdir: /home/developer/Temp/agile-practices-application
 
     - name: "Warming up maven cache: Remove build directory"
       tags: java, maven, maven-warm-up
