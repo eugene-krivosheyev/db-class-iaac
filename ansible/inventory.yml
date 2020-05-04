@@ -117,6 +117,12 @@
         name: maven
         state: present
 
+    - name: "Install Maven: Configure local repo"
+      tags: java, maven, maven-repo
+      copy:
+        src: settings.xml
+        dest: /usr/share/maven/conf/
+
     - name: "Install Maven: Make local repo folder"
       tags: java, maven, maven-repo
       file:
@@ -126,12 +132,6 @@
         group: administrator
         mode: u=rwx,g=rwx,o=r
         recurse: yes
-
-    - name: "Install Maven: Configure local repo"
-      tags: java, maven, maven-repo
-      copy:
-        src: settings.xml
-        dest: /usr/share/maven/conf/
 
 
     - name: Install Gradle
@@ -150,23 +150,13 @@
 
     - name: "Install IntelliJ IDEA CE: Settings"
       tags: java, idea
+      become_user: administrator
       copy:
         src: settings.zip
         dest: /home/administrator/.Idea*/config/
         owner: administrator
         group: administrator
         mode: u=rwx,g=rwx,o=r
-
-
-    - name: "Prepare temporary directories: administrator/Temp"
-      tags: ux, java, maven-warm-up
-      file:
-        path: /home/administrator/Temp
-        state: directory
-        owner: administrator
-        group: administrator
-        mode: u=rwx,g=rwx,o=r
-        recurse: yes
 
 
     - name: "Install Chromium: Remove Firefox"
@@ -199,40 +189,9 @@
       tags: docker
       command: chmod 666 /var/run/docker.sock
 
-
     - name: "Install Docker: Warm up Docker cache with useful images"
       tags: docker, docker-warm-up
       command: docker pull openjdk:8-jre-alpine
-
-
-    - name: "Warming up maven cache: Clone java project"
-      tags: java, maven, maven-warm-up
-      git:
-        repo: https://github.com/eugene-krivosheyev/agile-practices-application
-        dest: /home/administrator/Temp/agile-practices-application
-        force: yes
-
-    - name: "Warming up maven cache: Ensure ownership of maven repo"
-      tags: java, maven, maven-repo
-      file:
-        path: /usr/share/maven-repo/
-        owner: administrator
-        group: administrator
-        mode: u=rwx,g=rwx,o=r
-        recurse: yes
-
-    - name: "Warming up maven cache: Build maven project"
-      tags: java, maven, maven-warm-up
-      become_user: administrator
-      command: mvn clean verify
-      args:
-        chdir: /home/administrator/Temp/agile-practices-application
-
-    - name: "Warming up maven cache: Remove build directory"
-      tags: java, maven, maven-warm-up
-      file:
-        path: /home/administrator/Temp/agile-practices-application
-        state: absent
 
 
     - name: Remove apt dependencies that are no longer required
