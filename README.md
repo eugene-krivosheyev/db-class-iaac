@@ -3,15 +3,15 @@
 ---
 
 # Загрузочная флешка
-- [ ] [Ubuntu 20.04](https://releases.ubuntu.com/20.04/ubuntu-20.04-desktop-amd64.iso)
+- [ ] [Zorin Os Core](https://zorinos.com/download/)
 
 # Загрузка с флешки @F12 и установка ОС
-- [ ] Сразу соединяемся к WiFi: ekr@bk.ru
+- [ ] Сразу соединяемся к WiFi
 - [ ] Keyboard Layout: Russia
-- [ ] Minimal installation, Download Updates, Install third-party software
-- [ ] Erase disk and install Ubuntu
+- [ ] Download Updates, Install third-party software
+- [ ] Erase disk and install
 - [ ] Moscow Location
-- [ ] Пользователь: developer
+- [ ] Пользователь: **developer**
 - [ ] Имя хоста devstation
 
 # Настройка BIOS @F2 после установки ОС
@@ -33,7 +33,6 @@
 - [ ] Выключить звук
 - [ ] Подключиться к WiFi
 - [ ] Установить Additional Drivers
-- [ ] Ubuntu предлагает накатить обновления в панели задач - накатить
 
 # Ручной первичный провиженинг
 - [ ] Обеспечить доступ по ssh извне
@@ -45,7 +44,7 @@ sudo ufw allow 22
 ip address show | grep global
 ```
 или по [ссылке](https://tinyurl.com/ekr-ssh)
-- [ ] Добавить адрес в _hosts.yml_
+- [ ] Добавить адрес в [hosts.yml](/ansible/hosts.yml)
 
 # Автоматический провиженинг
 - [ ] Cбросить ssh кеша хостов
@@ -55,10 +54,10 @@ ssh-keygen -R 192.168.1.49
 
 - [ ] Smoke Test конфигурации хостов
 ```bash
-ansible -i ansible/hosts.yml --ask-pass --ask-become-pass -m shell -a 'uname -a' all
+ansible -i ansible/inventory.yml --ask-pass --ask-become-pass -m shell -a 'uname -a' all
 ```
 
 - [ ] Провиженинг базовых фич
 ```bash
-ansible-playbook --ask-pass --ask-become-pass -i ansible/hosts.yml ansible/inventory.yml [--skip-tags "homedir4developer"] [--start-at-task='Shut down CI docker containers'] [--step] [--tags "ansible"] [--limit dev_stations] [-vvv]
+ansible-playbook --ask-pass --ask-become-pass -i ansible/inventory.yml ansible/playbook.yml
 ```

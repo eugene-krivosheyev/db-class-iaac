@@ -1,0 +1,210 @@
+# TODO: 
+# temorary/session developer home folder
+# internet access rules
+# refactor to roles
+
+- hosts: all
+  gather_facts: no
+  become: yes
+
+  tasks:
+  - name: "Prepare apt cache"
+    ignore_errors: yes
+    tags: apt
+    apt:
+      autoremove: yes
+      autoclean: yes
+      update_cache: yes
+      cache_valid_time: 86400 # One day
+
+
+- hosts: dev_stations
+  gather_facts: yes
+  become: yes
+
+  pre_tasks:
+    - assert:
+        that:
+          - ansible_processor_vcpus >= 4
+          - (ansible_memtotal_mb * 0.001024) | int >= 12
+          - ((ansible_mounts|first).size_available | float / 1000000000) >= 200
+      tags: not_for_virtual_box_test_env
+
+  tasks:
+    - name: "Set static host ip: Update config"
+      tags: network
+      template:
+        src: templates/01-network-manager-all.yaml.j2
+        dest: /etc/netplan/01-network-manager-all.yaml
+        owner: root
+        group: root
+        mode: u=rw,g=r,o=r
+
+    - name: "Set static host ip: Restart service"
+      tags: network
+      command: netplan apply
+
+
+    - name: Get rid of bluetooth
+      tags: ux
+      command: systemctl disable bluetooth.service
+
+
+    - name: "Install Ansible: Add apt repository"
+      tags: ansible
+      apt_repository:
+        repo: ppa:ansible/ansible
+        state: present
+      ignore_errors: yes
+
+    - name: "Install Ansible: Update apt repository"
+      tags: ansible
+      apt:
+        autoremove: yes
+        autoclean: yes
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 #One day
+      ignore_errors: yes
+
+    - name: "Install Ansible: Install package"
+      tags: ansible
+      apt:
+        name: ansible
+        state: present
+
+
+    - name: Install Git
+      tags: git
+      package:
+        name: git
+        state: present
+
+    - name: Install JDK
+      tags: java
+      package:
+        name: openjdk-8-jdk-headless
+        state: present
+
+
+    - name: "Install Maven: Install package"
+      tags: java, maven
+      package:
+        name: maven
+        state: present
+
+    - name: "Install Maven: Configure local repo"
+      tags: java, maven, maven-repo
+      copy:
+        src: settings.xml
+        dest: /usr/share/maven/conf/
+
+    - name: "Install Maven: Make local repo folder"
+      tags: java, maven, maven-repo
+      file:
+        path: /usr/share/maven-repo
+        state: directory
+        owner: developer
+        group: developer
+        mode: u=rwx,g=rwx,o=r
+        recurse: yes
+
+
+    - name: Install Gradle
+      tags: java, gradle
+      package:
+        name: gradle
+        state: present
+
+
+    - name: "Install IntelliJ IDEA CE: IDE"
+      tags: java, idea
+      snap:
+        name: intellij-idea-community
+        classic: yes
+        state: present
+
+    - name: "Install IntelliJ IDEA CE: Creates config folder"
+      tags: java, idea
+      file:
+        path: /home/developer/.config/JetBrains/IdeaIC2020.1
+        state: directory
+        owner: developer
+        group: developer
+        recurse: yes
+
+    - name: "Install IntelliJ IDEA CE: Settings"
+      tags: java, idea
+      become_user: developer
+      unarchive:
+        # TODO update Idea's folder name according to current version
+        dest: /home/developer/.config/JetBrains/IdeaIC2020.1/
+        src: settings.zip
+        owner: developer
+        group: developer
+
+
+    - name: "Install Chrome: Remove Firefox"
+      tags: chrome
+      package:
+        name: firefox
+        state: absent
+
+    - name: "Install Chrome: Download package"
+      tags: chrome
+      get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/
+
+    - name: "Install Chrome: Install package"
+      tags: chrome
+      apt:
+        deb: /tmp/google-chrome-stable_current_amd64.deb
+
+    - name: "Install Chrome: Remove package"
+      tags: chrome
+      file:
+        path: /tmp/google-chrome-stable_current_amd64.deb
+        state: absent
+
+
+    - name: "Install Docker: Docker CE"
+      tags: docker
+      package:
+        name: docker.io
+        state: present
+
+    - name: "Install Docker: Add user to Docker group"
+      tags: docker
+      user:
+        name: developer
+        groups: docker
+        append: yes
+
+    - name: "Install Docker: Get rid of Permission Denied"
+      tags: docker
+      command: chmod 666 /var/run/docker.sock
+
+    - name: "Install Docker: Warm up Docker cache with useful images"
+      tags: docker, docker-warm-up
+      command: docker pull openjdk:8-jre-alpine
+
+
+    - name: Remove apt dependencies that are no longer required
+      tags: apt
+      apt:
+        autoremove: yes
+
+
+    - name: Reboot
+      tags: reboot
+      command: shutdown -r now "Reboot triggered by Ansible script"
+      async: 1
+      ignore_errors: yes
+
+    - name: Wait for instance up after reboot
+      tags: reboot
+      wait_for_connection:
+        delay: 5
+        timeout: 30
+      ignore_errors: yes
